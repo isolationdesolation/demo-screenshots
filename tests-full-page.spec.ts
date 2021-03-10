@@ -7,9 +7,9 @@ describe("Тест для страницы с ожиданием загрузк�
 
   it("Rubricator", async () => {
     reporter.addLabel("testType", "screenshotDiff");
-    await page.click("//sd-categories-menu//button");
+    await page.click("//categories-menu//button");
     await page.waitForSelector("//cx-spinner", {state: "detached"});
-    await page.waitForSelector("//sd-submenu-categories-menu");
+    await page.waitForSelector("//submenu-categories-menu");
     const img = await page.screenshot();
     const testName = 'rubricator-';
     try {
