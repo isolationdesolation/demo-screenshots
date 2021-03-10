@@ -1,0 +1,96 @@
+stages:
+  - build_docker
+  - start_allure
+  - test
+  - stop_allure
+
+variables:
+  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  GIT_SSL_NO_VERIFY: "true"
+
+##########################################################
+
+build-docker:
+  stage: build_docker
+  tags:
+    - docker-machine-runner
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE -f devops/Dockerfile .
+    - docker push $IMAGE
+
+###########################################################
+
+start:
+  stage: start_allure
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+  tags:
+    - test-machine-runner
+  image: $IMAGE
+  variables:
+    ALLURE_LAUNCH_TAGS: "$CI_COMMIT_REF_NAME"
+  script:
+    - mkdir .allure
+    - allurectl job-run start
+
+###########################################################
+
+.test_run:
+  stage: test
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+  tags:
+    - test-machine-runner
+  image: $IMAGE
+  variables:
+    PROJECT_NAME: CHANGE_THIS
+    ALERT: $ALERT
+    ALLURE_JOB_RUN_CHILD: "true"
+  script:
+    - cd /app
+    - npm run test
+  after_script:
+    - cd /app
+    - allurectl upload ./allure-results
+
+stage-desk:
+  extends: .test_run
+  variables:
+    ENV: stage
+    DEVICE: desktop
+    DOMAIN: some-domain.io
+
+
+stage-mvs:
+  extends: .test_run
+  variables:
+    ENV: stage
+    DEVICE: mvs
+    DOMAIN: some-domain.io
+
+###################################################################
+
+stop:
+  stage: stop_allure
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+  tags:
+    - test-machine-runner
+  image: $IMAGE
+  script:
+    - allurectl job-run stop  
