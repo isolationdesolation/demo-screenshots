@@ -14,9 +14,6 @@ let browser: Browser;
 let context: BrowserContext;
 let page: Page;
 
-const viewportWidth: number = 1920;
-const viewportHeight: number = 1080;
-
 beforeAll(async () => {
     browser = await browserType.launch({ headless: true });
     global.browser = browser;
@@ -33,7 +30,6 @@ beforeEach(async () => {
     const page = await context.newPage();
     global.page = page;
     await page.goto(process.env.SERVER!, { waitUntil: 'networkidle' });
-    await page.setViewportSize({width:viewportWidth, height:viewportHeight});
 });
 
 

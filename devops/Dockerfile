@@ -1,5 +1,3 @@
-
-# Берем родной образ плейрайта, и джаву чтобы поставить аллюр в контейнере
 FROM mcr.microsoft.com/playwright:bionic
 ENV JAVA_HOME /opt/jdk-10.0.1
 
